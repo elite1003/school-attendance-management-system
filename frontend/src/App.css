@@ -1,0 +1,18 @@
+.search {
+  margin: 1rem;
+  height: 2rem;
+  padding: 1rem;
+  border: 2px solid #dad7cd;
+  border-radius: 4px;
+}
+.form-input {
+  margin-right: 8px;
+  display: inline;
+}
+.form-action {
+  display: inline;
+  margin-right: 8px;
+}
+.form {
+  display: inline;
+}
