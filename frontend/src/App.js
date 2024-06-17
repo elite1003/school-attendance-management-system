@@ -1,11 +1,84 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./App.css";
+import tick from "./tick.svg";
+import cross from "./cross.svg";
 import { useState } from "react";
+
 const App = () => {
   const [attendance, setAttendance] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [date, setDate] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [showAttendance, setShowAttendance] = useState(false);
+  const [report, setReport] = useState({});
+  const [showReport, setShowReport] = useState(false);
+  useEffect(() => {
+    const fetchAllStudents = () => {
+      fetch("http://localhost:4000/student")
+        .then((response) => response.json())
+        .then((students) => setStudents(students))
+        .catch((err) => console.log(err));
+    };
+    fetchAllStudents();
+  }, []);
+
   const handleDateSubmission = (e) => {
     e.preventDefault();
-    console.log(e.target.date.value);
+    const date = e.target.date.value;
+    setDate(date);
+    fetch(`http://localhost:4000/attendance/${date}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setAttendance(data);
+          setShowAttendance(true);
+          setShowForm(false);
+          setShowReport(false);
+        } else {
+          setShowForm(true);
+          setShowAttendance(false);
+          setShowReport(false);
+        }
+      })
+      .catch((err) => console.log(err));
+  };
+
+  const handleAttendanceSubmission = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const attendanceData = [];
+    formData.forEach((value, key) => {
+      const data = {
+        id: +key,
+        present: value === "true",
+      };
+      attendanceData.push(data);
+    });
+    fetch(`http://localhost:4000/attendance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, studentData: attendanceData }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setAttendance(data);
+        setShowAttendance(true);
+        setShowForm(false);
+        setShowReport(false);
+      })
+      .catch((err) => console.log(err));
+  };
+  const getAllAttendance = () => {
+    fetch("http://localhost:4000/attendance")
+      .then((response) => response.json())
+      .then((report) => {
+        console.log(report);
+        setReport(report);
+        setShowAttendance(false);
+        setShowForm(false);
+        setShowReport(true);
+      })
+      .catch((err) => console.log(err));
   };
   return (
     <main>
@@ -19,36 +92,93 @@ const App = () => {
           </div>
         </form>
         <div className="form-action">
-          <button type="button">fetch Attendance Report</button>
+          <button type="button" onClick={getAllAttendance}>
+            fetch Attendance Report
+          </button>
         </div>
       </section>
-      <section>
-        <ul>
-          <li>
-            a{" "}
-            <form className="form">
-              <div className="form-input">
-                <input
-                  type="radio"
-                  id="present"
-                  name="attendance"
-                  value={true}
-                />
-                <label htmlFor="present">present</label>
+      {showReport && (
+        <section>
+          <ul>
+            {report.attendance.map((student) => {
+              return (
+                <li key={student.id} className="attendance">
+                  <span>{student.name}</span>
+                  <span>{`${student.numberOfPresent}/${report.totalDates}`}</span>
+                  <span>
+                    {(student.numberOfPresent / report.totalDates).toFixed(2) *
+                      100}
+                    %
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+      {showAttendance && (
+        <section>
+          <ul>
+            {attendance.map((student) => {
+              return (
+                <li key={student.id} className="attendance">
+                  <span>{student.name}</span>
+                  {student.Attendance.present ? (
+                    <span>
+                      <img src={tick} alt="tick" width={15} />
+                      {"   "}
+                      present
+                    </span>
+                  ) : (
+                    <span>
+                      <img src={cross} alt="cross" width={15} />
+                      {"   "}
+                      absent
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+      {showForm && (
+        <section>
+          <form
+            className="attendance-form"
+            onSubmit={handleAttendanceSubmission}
+          >
+            {students.map((student) => (
+              <div key={student.id} className="attendance">
+                <span>{student.name}</span>
+                <div className="form-input">
+                  <input
+                    type="radio"
+                    id={`present-${student.id}`}
+                    name={`${student.id}`}
+                    value="true"
+                    required
+                  />
+                  <label htmlFor={`present-${student.id}`}>present</label>
+                </div>
+                <div className="form-input">
+                  <input
+                    type="radio"
+                    id={`absent-${student.id}`}
+                    name={`${student.id}`}
+                    value="false"
+                    required
+                  />
+                  <label htmlFor={`absent-${student.id}`}>absent</label>
+                </div>
               </div>
-              <div className="form-input">
-                <input
-                  type="radio"
-                  id="absent"
-                  name="attendance"
-                  value={false}
-                />
-                <label htmlFor="absent">absent</label>
-              </div>
-            </form>
-          </li>
-        </ul>
-      </section>
+            ))}
+            <div className="attendance-form-action">
+              <button type="submit">Submit</button>
+            </div>
+          </form>
+        </section>
+      )}
     </main>
   );
 };

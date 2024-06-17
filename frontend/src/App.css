@@ -16,3 +16,14 @@
 .form {
   display: inline;
 }
+.attendance-form {
+  margin: 2rem;
+}
+.attendance {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 8rem;
+}
+.attendance-form-action button {
+  margin-left: 4rem;
+}

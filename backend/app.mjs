@@ -9,17 +9,18 @@ import Date from "./models/date.mjs";
 import Attendance from "./models/attendance.mjs";
 
 //routes
-
+import indexRoutes from "./routers/index.mjs";
 const app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
+app.use("/", indexRoutes);
 //associations
 Student.belongsToMany(Date, { through: Attendance, foreignKey: "studentId" });
 Date.belongsToMany(Student, { through: Attendance, foreignKey: "dateId" });
 
 sequelize
+  //   .sync({ force: true })
   .sync()
   .then(() => {
     console.log("successfully connected to database");
